@@ -60,7 +60,7 @@ A modern blog platform built using **FastAPI** (backend), **Next.js** (frontend)
 
 1. Navigate to the frontend directory:
     ```bash
-    cd frontend
+    cd client
     ```
 
 2. Install dependencies:
