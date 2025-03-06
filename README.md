@@ -15,7 +15,106 @@ A modern blog platform built using **FastAPI** (backend), **Next.js** (frontend)
 
 ---
 
-## 🏗️ Project Structure
 
-/ ├── backend/ # FastAPI Backend │ ├── main.py # Entry point │ ├── models/ # Database models │ ├── routes/ # API routes │ ├── services/ # Business logic │ ├── config.py # Database settings │ ├── frontend/ # Next.js Frontend │ ├── pages/ # App pages │ ├── components/ # Reusable components │ ├── services/ # API calls │ ├── README.md # This file └── .env # Environment variables (DB creds, API URL)
+---
+
+## ⚡ Requirements
+
+- Python 3.11+
+- Node.js 18+
+- PostgreSQL 14+
+- FastAPI
+- SQLAlchemy
+- Next.js
+
+---
+
+## 🔧 Setup
+
+### Backend (FastAPI)
+
+1. Create and activate virtual environment:
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # or venv\Scripts\activate for Windows
+    ```
+
+2. Install dependencies:
+    ```bash
+    pip install fastapi uvicorn psycopg2-binary sqlalchemy python-dotenv
+    ```
+
+3. Configure `.env` (sample):
+    ```
+    DATABASE_URL=postgresql://username:password@localhost/dbname
+    ```
+
+4. Run FastAPI server:
+    ```bash
+    uvicorn backend.main:app --reload
+    ```
+
+---
+
+### Frontend (Next.js)
+
+1. Navigate to the frontend directory:
+    ```bash
+    cd frontend
+    ```
+
+2. Install dependencies:
+    ```bash
+    npm install
+    ```
+
+3. Configure `.env.local` (sample):
+    ```
+    NEXT_PUBLIC_API_URL=http://localhost:8000
+    ```
+
+4. Run Next.js development server:
+    ```bash
+    npm run dev
+    ```
+
+---
+
+### Database (PostgreSQL)
+
+1. Make sure PostgreSQL is running.
+2. Create the database:
+    ```sql
+    CREATE DATABASE blogsite_db;
+    ```
+
+---
+
+## 📮 API Endpoints Example
+
+| Method | Endpoint         | Description       |
+|----|----------------|------------------|
+| GET  | /posts            | Fetch all posts |
+| POST | /posts            | Create a new post |
+| GET  | /posts/{id}    | Get a single post |
+| PUT  | /posts/{id}    | Update a post |
+| DELETE | /posts/{id} | Delete a post |
+
+---
+
+## ✅ Features
+
+- Fullstack blog site
+- RESTful API with FastAPI
+- PostgreSQL relational database
+- Frontend UI with Next.js
+
+---
+
+## 📖 To-Do
+
+- [ ] Add authentication (JWT)
+- [ ] Add rich text/markdown editor
+- [ ] Deploy to production
+
 
