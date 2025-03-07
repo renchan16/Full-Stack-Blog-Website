@@ -85,7 +85,7 @@ A modern blog platform built using **FastAPI** (backend), **Next.js** (frontend)
 1. Make sure PostgreSQL is running.
 2. Create the database:
     ```sql
-    CREATE DATABASE blogsite_db;
+    CREATE DATABASE mydatabase;
     ```
 
 ---
