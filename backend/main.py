@@ -8,7 +8,7 @@ from datetime import datetime
 
 app = FastAPI()
 
-# CORS settings (adjust IP to match your frontend)
+# CORS settings
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://192.168.31.136:3000", "http://localhost:3000"],
@@ -17,7 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Database config (adjust credentials/db name if needed)
+# Database config 
 DATABASE_URL = "postgresql://newowner:newpassword@localhost/mydatabase"
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -73,7 +73,7 @@ def get_posts(db: Session = Depends(get_db)):
 def get_post(post_id: int, db: Session = Depends(get_db)):
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
-        raise HTTPException(status_code=404, detail="Post not found")
+        raise HTTPException         (status_code=404, detail="Post not found")
     return post
 
 # Update post (expects JSON body)
