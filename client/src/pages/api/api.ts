@@ -1,3 +1,13 @@
+import axios from 'axios';
+
+export const searchPosts = async (query: string) => {
+    const response = await axios.get(`http://localhost:8000/search/`, {
+        params: { query }
+    });
+
+    return response.data;
+};
+
 const BASE_URL = "http://localhost:8000"
 
 export type Post = {

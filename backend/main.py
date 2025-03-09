@@ -1,12 +1,14 @@
-from fastapi import FastAPI, HTTPException, Depends
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, func
+from fastapi import FastAPI, HTTPException, Query, Depends
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 
+
 app = FastAPI()
+
 
 # CORS settings
 app.add_middleware(
@@ -29,6 +31,7 @@ class Post(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     content = Column(String)
+    content = Column(Text)
     date_posted = Column(DateTime, server_default=func.now())
     author_name = Column(String)
 
@@ -98,3 +101,17 @@ def delete_post(post_id: int, db: Session = Depends(get_db)):
     db.delete(db_post)
     db.commit()
     return {"message": "Post deleted"}
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@app.get("/search/")
+def search_posts(query: str = Query(..., min_length=1), db: Session = Depends(get_db)):
+    results = db.query(Post).filter(Post.title.ilike(f"%{query}%")).all()
+    if not results:
+        raise HTTPException(status_code=404, detail="No posts found")
+    return results

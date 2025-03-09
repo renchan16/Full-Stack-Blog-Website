@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { fetchPosts, createPost, updatePost, deletePost, type Post } from "./api/api"
+import { fetchPosts, createPost, updatePost, deletePost, type Post, searchPosts } from "./api/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Edit, Trash2, Plus, Clock, Calendar, User, Bookmark, BookmarkCheck, Moon, Sun } from "lucide-react"
+import { Edit, Trash2, Plus, Clock, Calendar, User, Bookmark, BookmarkCheck, Moon, Sun, Search } from "lucide-react"
 
 export default function Blog() {
   const [posts, setPosts] = useState<Post[]>([])
@@ -28,6 +28,47 @@ export default function Blog() {
   const [activeTab, setActiveTab] = useState("all")
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   const [viewModalOpen, setViewModalOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [searchResults, setSearchResults] = useState([])
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) {
+      setSearchResults([])
+      setIsSearching(false)
+      return
+    }
+
+    setIsSearching(true)
+    setSearchSuggestions([])
+
+    try {
+      // For testing purposes, let's implement a client-side search if the API fails
+      let results
+      try {
+        results = await searchPosts(searchTerm)
+      } catch (error) {
+        console.warn("API search failed, falling back to client-side search:", error)
+        // Client-side fallback search
+        results = posts.filter(
+          (post) =>
+            post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            post.content.toLowerCase().includes(searchTerm.toLowerCase()),
+        )
+      }
+
+      setSearchResults(results)
+      if (results.length === 0) {
+        console.log("No results found for:", searchTerm)
+      } else {
+        console.log(`Found ${results.length} results for:`, searchTerm)
+      }
+    } catch (error) {
+      console.error("Search failed:", error)
+      setError("Search failed. Please try again.")
+    }
+  }
 
   const postsPerPage = 4
 
@@ -188,21 +229,87 @@ export default function Blog() {
     <div className={`min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300`}>
       {/* Header with navigation */}
       <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10 shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="h-8 w-8 bg-gradient-to-br from-purple-600 to-blue-500 rounded-lg"></div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">BlogSpace</h1>
-          </div>
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="h-8 w-8 bg-gradient-to-br from-purple-600 to-blue-500 rounded-lg"></div>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">BlogSpace</h1>
+            </div>
 
-          <div className="flex items-center space-x-4">
-            <Button onClick={openModalForCreate} className="bg-purple-600 hover:bg-purple-700 text-white">
-              <Plus className="h-5 w-5 mr-2" />
-              New Post
-            </Button>
+            <div className="flex items-center gap-3">
+              <div className="relative w-56 md:w-64">
+                <div className="relative">
+                  <Input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value)
+                      // Generate suggestions based on existing post titles
+                      if (e.target.value.trim()) {
+                        const suggestions = posts
+                          .filter(
+                            (post) =>
+                              post.title.toLowerCase().includes(e.target.value.toLowerCase()) ||
+                              post.content.toLowerCase().includes(e.target.value.toLowerCase()),
+                          )
+                          .slice(0, 5)
+                          .map((post) => post.title)
+                        setSearchSuggestions([...new Set(suggestions)])
+                      } else {
+                        setSearchSuggestions([])
+                        setSearchResults([])
+                      }
+                    }}
+                    placeholder="Search posts..."
+                    className="pr-10 h-9 border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-full"
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  />
+                  <Button
+                    onClick={handleSearch}
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full rounded-r-full text-gray-500"
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
 
-            <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="rounded-full h-9 w-9">
-              {darkMode ? <Sun className="h-5 w-5 text-yellow-400" /> : <Moon className="h-5 w-5 text-gray-700" />}
-            </Button>
+                {searchSuggestions.length > 0 && (
+                  <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+                    {searchSuggestions.map((suggestion, index) => (
+                      <div
+                        key={index}
+                        className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer flex items-center"
+                        onClick={() => {
+                          setSearchTerm(suggestion)
+                          setSearchSuggestions([])
+                          // Perform search with the selected suggestion
+                          const results = posts.filter(
+                            (post) =>
+                              post.title.toLowerCase().includes(suggestion.toLowerCase()) ||
+                              post.content.toLowerCase().includes(suggestion.toLowerCase()),
+                          )
+                          setSearchResults(results)
+                          setIsSearching(true)
+                        }}
+                      >
+                        <Search className="h-3.5 w-3.5 mr-2 text-gray-500" />
+                        <span className="text-sm truncate">{suggestion}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <Button onClick={openModalForCreate} className="bg-purple-600 hover:bg-purple-700 text-white">
+                <Plus className="h-5 w-5 mr-2" />
+                <span className="hidden sm:inline">New Post</span>
+              </Button>
+
+              <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="rounded-full h-9 w-9">
+                {darkMode ? <Sun className="h-5 w-5 text-yellow-400" /> : <Moon className="h-5 w-5 text-gray-700" />}
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -214,32 +321,167 @@ export default function Blog() {
           </Alert>
         )}
 
-        {/* Tabs for filtering */}
-        <Tabs defaultValue="all" className="mb-8" onValueChange={setActiveTab}>
-          <div className="flex items-center justify-between mb-4">
-            <TabsList className="bg-black-100 dark:bg-gray-800">
-              <TabsTrigger
-                value="all"
-                className="data-[state=active]:text-black dark:data-[state=active]:text-white data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700"
-              >
-                All Posts
-              </TabsTrigger>
-              <TabsTrigger
-                value="bookmarked"
-                className="data-[state=active]:text-black dark:data-[state=active]:text-white data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700"
-              >
-                Bookmarked
-              </TabsTrigger>
-            </TabsList>
+        {isSearching ? (
+          <div>
+            {searchResults.length > 0 ? (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    Search Results for "{searchTerm}" ({searchResults.length})
+                  </h2>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setIsSearching(false)
+                      setSearchTerm("")
+                      setSearchResults([])
+                    }}
+                    className="text-gray-600 dark:text-gray-400"
+                  >
+                    Clear Search
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {searchResults.map((post) => (
+                    <FeaturedPostCard
+                      key={post}
+                      post={post}
+                      onEdit={() => handleEdit(post)}
+                      onDelete={() => handleDelete(post)}
+                      formatDate={formatDate}
+                      calculateReadingTime={calculateReadingTime}
+                      isBookmarked={bookmarkedPosts.includes(post)}
+                      onBookmarkToggle={() => toggleBookmark(post)}
+                      onCardClick={() => openViewModal(post)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-20">
+                <div className="bg-gray-100 dark:bg-gray-800 rounded-full h-20 w-20 flex items-center justify-center mx-auto mb-4">
+                  <Search className="h-10 w-10 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No results found</h3>
+                <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                  We couldn't find any posts matching "{searchTerm}". Try a different search term.
+                </p>
+                <Button
+                  onClick={() => {
+                    setIsSearching(false)
+                    setSearchTerm("")
+                  }}
+                  className="bg-purple-600 hover:bg-purple-700 text-white mt-6"
+                >
+                  View All Posts
+                </Button>
+              </div>
+            )}
           </div>
+        ) : (
+          <Tabs defaultValue="all" className="mb-8" onValueChange={setActiveTab}>
+            <div className="flex items-center justify-between mb-4">
+              <TabsList className="bg-black-100 dark:bg-gray-800">
+                <TabsTrigger
+                  value="all"
+                  className="data-[state=active]:text-black dark:data-[state=active]:text-white data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700"
+                >
+                  All Posts
+                </TabsTrigger>
+                <TabsTrigger
+                  value="bookmarked"
+                  className="data-[state=active]:text-black dark:data-[state=active]:text-white data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700"
+                >
+                  Bookmarked
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-          <TabsContent value="all" className="mt-0">
-            {/* Featured Posts Section */}
-            {featuredPosts.length > 0 && (
-              <div className="mb-12">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Featured Posts</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {featuredPosts.map((post) => (
+            <TabsContent value="all" className="mt-0">
+              {/* Featured Posts Section */}
+              {featuredPosts.length > 0 && (
+                <div className="mb-12">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Featured Posts</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {featuredPosts.map((post) => (
+                      <FeaturedPostCard
+                        key={post.id}
+                        post={post}
+                        onEdit={() => handleEdit(post)}
+                        onDelete={() => handleDelete(post.id)}
+                        formatDate={formatDate}
+                        calculateReadingTime={calculateReadingTime}
+                        isBookmarked={bookmarkedPosts.includes(post.id)}
+                        onBookmarkToggle={() => toggleBookmark(post.id)}
+                        onCardClick={() => openViewModal(post)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Recent Posts Section */}
+              {paginatedPosts.length > 0 && (
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Recent Posts</h2>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {paginatedPosts.map((post) => (
+                      <RecentPostCard
+                        key={post.id}
+                        post={post}
+                        onEdit={() => handleEdit(post)}
+                        onDelete={() => handleDelete(post.id)}
+                        formatDate={formatDate}
+                        calculateReadingTime={calculateReadingTime}
+                        isBookmarked={bookmarkedPosts.includes(post.id)}
+                        onBookmarkToggle={() => toggleBookmark(post.id)}
+                        onCardClick={() => openViewModal(post)}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 0 && (
+                    <div className="flex justify-center mt-10">
+                      {Array.from({ length: totalPages }, (_, i) => (
+                        <Button
+                          key={i}
+                          variant={currentPage === i + 1 ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(i + 1)}
+                          className={`w-9 h-9 p-0 mx-1 ${
+                            currentPage === i + 1
+                              ? "bg-purple-600 hover:bg-purple-700 text-white border-0"
+                              : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300"
+                          }`}
+                        >
+                          {i + 1}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {filteredPosts.length === 0 && (
+                <div className="text-center py-20">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No posts found</h3>
+                  <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                    We couldn't find any posts. Create a new post to get started.
+                  </p>
+                  <Button onClick={openModalForCreate} className="bg-purple-600 hover:bg-purple-700 text-white mt-6">
+                    <Plus className="h-5 w-5 mr-2" />
+                    Create New Post
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="bookmarked" className="mt-0">
+              {bookmarkedPosts.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredPosts.map((post) => (
                     <FeaturedPostCard
                       key={post.id}
                       post={post}
@@ -247,109 +489,33 @@ export default function Blog() {
                       onDelete={() => handleDelete(post.id)}
                       formatDate={formatDate}
                       calculateReadingTime={calculateReadingTime}
-                      isBookmarked={bookmarkedPosts.includes(post.id)}
+                      isBookmarked={true}
                       onBookmarkToggle={() => toggleBookmark(post.id)}
                       onCardClick={() => openViewModal(post)}
                     />
                   ))}
                 </div>
-              </div>
-            )}
-
-            {/* Recent Posts Section */}
-            {paginatedPosts.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Recent Posts</h2>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {paginatedPosts.map((post) => (
-                    <RecentPostCard
-                      key={post.id}
-                      post={post}
-                      onEdit={() => handleEdit(post)}
-                      onDelete={() => handleDelete(post.id)}
-                      formatDate={formatDate}
-                      calculateReadingTime={calculateReadingTime}
-                      isBookmarked={bookmarkedPosts.includes(post.id)}
-                      onBookmarkToggle={() => toggleBookmark(post.id)}
-                      onCardClick={() => openViewModal(post)}
-                    />
-                  ))}
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 0 && (
-                  <div className="flex justify-center mt-10">
-                    {Array.from({ length: totalPages }, (_, i) => (
-                      <Button
-                        key={i}
-                        variant={currentPage === i + 1 ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(i + 1)}
-                        className={`w-9 h-9 p-0 mx-1 ${
-                          currentPage === i + 1
-                            ? "bg-purple-600 hover:bg-purple-700 text-white border-0"
-                            : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300"
-                        }`}                        
-                      >
-                        {i + 1}
-                      </Button>
-                    ))}
+              ) : (
+                <div className="text-center py-20">
+                  <div className="bg-gray-100 dark:bg-gray-800 rounded-full h-20 w-20 flex items-center justify-center mx-auto mb-4">
+                    <Bookmark className="h-10 w-10 text-gray-400" />
                   </div>
-                )}
-              </div>
-            )}
-
-            {filteredPosts.length === 0 && (
-              <div className="text-center py-20">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No posts found</h3>
-                <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                  We couldn't find any posts. Create a new post to get started.
-                </p>
-                <Button onClick={openModalForCreate} className="bg-purple-600 hover:bg-purple-700 text-white mt-6">
-                  <Plus className="h-5 w-5 mr-2" />
-                  Create New Post
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="bookmarked" className="mt-0">
-            {bookmarkedPosts.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredPosts.map((post) => (
-                  <FeaturedPostCard
-                    key={post.id}
-                    post={post}
-                    onEdit={() => handleEdit(post)}
-                    onDelete={() => handleDelete(post.id)}
-                    formatDate={formatDate}
-                    calculateReadingTime={calculateReadingTime}
-                    isBookmarked={true}
-                    onBookmarkToggle={() => toggleBookmark(post.id)}
-                    onCardClick={() => openViewModal(post)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-20">
-                <div className="bg-gray-100 dark:bg-gray-800 rounded-full h-20 w-20 flex items-center justify-center mx-auto mb-4">
-                  <Bookmark className="h-10 w-10 text-gray-400" />
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No bookmarked posts</h3>
+                  <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                    You haven't bookmarked any posts yet. Browse through the posts and bookmark the ones you want to
+                    read later.
+                  </p>
+                  <Button
+                    onClick={() => setActiveTab("all")}
+                    className="bg-purple-600 hover:bg-purple-700 text-white mt-6"
+                  >
+                    Browse Posts
+                  </Button>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No bookmarked posts</h3>
-                <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                  You haven't bookmarked any posts yet. Browse through the posts and bookmark the ones you want to read
-                  later.
-                </p>
-                <Button
-                  onClick={() => setActiveTab("all")}
-                  className="bg-purple-600 hover:bg-purple-700 text-white mt-6"
-                >
-                  Browse Posts
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+              )}
+            </TabsContent>
+          </Tabs>
+        )}
       </main>
 
       {/* Create/Edit Post Modal */}
@@ -496,8 +662,6 @@ export default function Blog() {
                   </Button>
                 </div>
               </DialogFooter>
-
-
             </>
           )}
         </DialogContent>
