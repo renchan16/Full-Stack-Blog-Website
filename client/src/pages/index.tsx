@@ -261,7 +261,7 @@ export default function Blog() {
                       }
                     }}
                     placeholder="Search posts..."
-                    className="pr-10 h-9 border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-full"
+                    className="pr-10 h-9 border-gray-300 text-black dark:text-white border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-full"
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   />
                   <Button
@@ -279,7 +279,7 @@ export default function Blog() {
                     {searchSuggestions.map((suggestion, index) => (
                       <div
                         key={index}
-                        className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer flex items-center"
+                        className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer flex items-center text-black dark:text-white"
                         onClick={() => {
                           setSearchTerm(suggestion)
                           setSearchSuggestions([])
