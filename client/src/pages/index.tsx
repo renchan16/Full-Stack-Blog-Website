@@ -272,7 +272,7 @@ export default function Blog() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div className="h-8 w-8 bg-gradient-to-br from-purple-600 to-blue-500 rounded-lg"></div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">BlogSpace</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Beyond the Code.</h1>
             </div>
 
             <div className="flex items-center gap-3">
