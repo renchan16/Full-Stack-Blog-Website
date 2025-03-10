@@ -1,5 +1,16 @@
 "use client"
 
+/**
+ * Blog Component
+ *
+ * A full-featured blog application with:
+ * - Post listing, creation, editing, and deletion
+ * - Search functionality
+ * - Bookmarking system
+ * - Dark mode toggle
+ * - Pagination
+ */
+
 import { useEffect, useState } from "react"
 import { fetchPosts, createPost, updatePost, deletePost, searchPosts, type Post } from "./api/api"
 import { Button } from "@/components/ui/button"
@@ -16,16 +27,19 @@ import { useLocalStorage } from "@/hooks/use-local-storage"
 export default function Blog() {
   // Main state
   const [posts, setPosts] = useState<Post[]>([])
+  // State for managing the main post data and filtered views
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([])
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [activeTab, setActiveTab] = useState("all")
   const [isSearching, setIsSearching] = useState(false)
+  // State for managing search functionality
   const [searchResults, setSearchResults] = useState<Post[]>([])
   const [searchTerm, setSearchTerm] = useState("")
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
+  // State for managing modal interactions
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [editingPostId, setEditingPostId] = useState<number | null>(null)
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
@@ -36,19 +50,23 @@ export default function Blog() {
     content: "",
     author_name: "",
   })
+  // State for form data when creating or editing posts
 
   // Preferences
   const [darkMode, setDarkMode] = useState(false)
+  // User preference state (persisted in localStorage)
   const [bookmarkedPosts, setBookmarkedPosts] = useLocalStorage<number[]>("bookmarkedPosts", [])
 
   // Constants
   const POSTS_PER_PAGE = 4
+  // Configuration constants
 
   // Initialize app
   useEffect(() => {
     loadPosts()
     initializeDarkMode()
   }, [])
+  // Initial app setup on component mount
 
   // Filter posts based on active tab
   useEffect(() => {
@@ -58,6 +76,7 @@ export default function Blog() {
     }
     setFilteredPosts(result)
   }, [posts, activeTab, bookmarkedPosts])
+  // Filter posts whenever the active tab, posts list, or bookmarks change
 
   // Initialize dark mode based on system preference
   const initializeDarkMode = () => {
@@ -66,6 +85,7 @@ export default function Blog() {
       document.documentElement.classList.add("dark")
     }
   }
+  // Set initial dark mode based on user's system preference
 
   // Fetch posts from API
   const loadPosts = async () => {
@@ -77,6 +97,7 @@ export default function Blog() {
       setError("Failed to fetch posts. Please try again.")
     }
   }
+  // Fetch posts from the API and handle errors
 
   // Search functionality
   const handleSearch = async () => {
@@ -108,6 +129,7 @@ export default function Blog() {
       setError("Search failed. Please try again.")
     }
   }
+  // Search functionality with API fallback to client-side search
 
   // Post CRUD operations
   const handleCreate = async () => {
@@ -123,6 +145,7 @@ export default function Blog() {
       setError("Failed to create post.")
     }
   }
+  // CRUD Operations - Create new post
 
   const handleEdit = (post: Post) => {
     setEditingPostId(post.id)
@@ -134,6 +157,7 @@ export default function Blog() {
     setIsModalOpen(true)
     setError(null)
   }
+  // CRUD Operations - Prepare post for editing
 
   const handleUpdate = async () => {
     if (!newPost.title || !newPost.content || !newPost.author_name || editingPostId === null) {
@@ -148,6 +172,7 @@ export default function Blog() {
       setError("Failed to update post.")
     }
   }
+  // CRUD Operations - Update existing post
 
   const handleDelete = async (id: number) => {
     try {
@@ -160,6 +185,7 @@ export default function Blog() {
       setError("Failed to delete post.")
     }
   }
+  // CRUD Operations - Delete post and remove from bookmarks if needed
 
   // Modal handlers
   const openModalForCreate = () => {
@@ -168,6 +194,7 @@ export default function Blog() {
     setIsModalOpen(true)
     setError(null)
   }
+  // Modal management - Open modal for creating new post
 
   const closeModal = () => {
     setIsModalOpen(false)
@@ -175,16 +202,19 @@ export default function Blog() {
     setEditingPostId(null)
     setError(null)
   }
+  // Modal management - Close and reset create/edit modal
 
   const openViewModal = (post: Post) => {
     setSelectedPost(post)
     setViewModalOpen(true)
   }
+  // Modal management - Open modal for viewing post details
 
   const closeViewModal = () => {
     setViewModalOpen(false)
     setSelectedPost(null)
   }
+  // Modal management - Close view modal
 
   // Utility functions
   const toggleBookmark = (postId: number) => {
@@ -192,17 +222,20 @@ export default function Blog() {
       bookmarkedPosts.includes(postId) ? bookmarkedPosts.filter((id) => id !== postId) : [...bookmarkedPosts, postId],
     )
   }
+  // Utility - Toggle bookmark status for a post
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode)
     document.documentElement.classList.toggle("dark")
   }
+  // Utility - Toggle dark mode and update DOM
 
   const calculateReadingTime = (content: string) => {
     const wordsPerMinute = 200
     const words = content.trim().split(/\s+/).length
     return Math.max(1, Math.ceil(words / wordsPerMinute))
   }
+  // Utility - Calculate estimated reading time based on content length
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -211,6 +244,7 @@ export default function Blog() {
       day: "numeric",
     })
   }
+  // Utility - Format date strings for display
 
   // Pagination
   const featuredPosts = filteredPosts.slice(0, 3)
@@ -219,6 +253,7 @@ export default function Blog() {
   const indexOfFirstPost = indexOfLastPost - POSTS_PER_PAGE
   const paginatedPosts = recentPosts.slice(indexOfFirstPost, indexOfLastPost)
   const totalPages = Math.ceil(recentPosts.length / POSTS_PER_PAGE)
+  // Pagination and content organization
 
   // Clear search
   const clearSearch = () => {
@@ -226,7 +261,9 @@ export default function Blog() {
     setSearchTerm("")
     setSearchResults([])
   }
+  // Utility - Reset search state
 
+  // UI Rendering - Main component structure with responsive layout
   return (
     <div className={`min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300`}>
       {/* Header */}
@@ -284,7 +321,7 @@ export default function Blog() {
                     size="sm"
                     onClick={clearSearch}
                     className="bg-white text-black border-black dark:bg-black dark:text-white dark:border-white"
-                    >
+                  >
                     Clear Search
                   </Button>
                 </div>
