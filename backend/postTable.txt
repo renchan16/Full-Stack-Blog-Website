@@ -1,0 +1,10 @@
+CREATE TABLE posts (
+    id SERIAL PRIMARY KEY,            -- Auto-incrementing unique identifier
+    title VARCHAR NOT NULL,           -- Post title (indexed for faster search)
+    content TEXT NOT NULL,            -- Post content (supports large text)
+    date_posted TIMESTAMP DEFAULT NOW(), -- Auto-filled with the current timestamp
+    author_name VARCHAR NOT NULL      -- Name of the author
+);
+
+
+This is the code for PostgreSQL . If you are using a different database system, you might need to adjust the syntax slightly.
